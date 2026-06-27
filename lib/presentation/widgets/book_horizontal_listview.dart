@@ -41,10 +41,11 @@ class _BookHorizontalListviewState extends State<BookHorizontalListview> {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: 400,
+      height: 370,
       child: Column(
         children: [
           _Title(widget.title),
+          const SizedBox(height: 15,),
           Expanded(
             child: ListView.builder(
               itemCount: widget.books.length,
@@ -71,53 +72,49 @@ class _Slide extends StatelessWidget {
     final textStyles = Theme.of(context).textTheme;
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 8),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          //Portada del libro
-          SizedBox(
-            width: 150,
-            child: ClipRRect(
-              borderRadius: BorderRadiusGeometry.circular(20),
-              child: Image.network(
-                book.coverUrl ??
-                    'https://upload.wikimedia.org/wikipedia/commons/thumb/6/65/No-Image-Placeholder.svg/1920px-No-Image-Placeholder.svg.png',
-                fit: BoxFit.cover,
-                height: 220,
-                width: 150,
-                loadingBuilder: (context, child, loadingProgress) {
-                  if (loadingProgress != null) {
-                    return const Padding(
-                      padding: EdgeInsetsGeometry.all(8),
-                      child: Center(
-                        child: CircularProgressIndicator(strokeWidth: 2), //TODO: Cambiar a imagen de carga
-                      ),
-                    );
-                  }
-
-                  return FadeIn(child: child); //TODO: Arreglar animación
-                },
+      child: FadeInRight(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            //Portada del libro
+            SizedBox(
+              width: 150,
+              child: ClipRRect(
+                borderRadius: BorderRadiusGeometry.circular(20),
+                child: FadeInImage(
+                  fit: BoxFit.cover,
+                  height: 220,
+                  fadeOutDuration: const Duration(milliseconds: 100),
+                  fadeInDuration: const Duration(milliseconds: 200),
+                  image: NetworkImage(
+                    book.coverUrl ??
+                        'https://upload.wikimedia.org/wikipedia/commons/thumb/6/65/No-Image-Placeholder.svg/1920px-No-Image-Placeholder.svg.png',
+                  ),
+                  placeholder: const AssetImage(
+                    'assets/loaders/book.gif',
+                  ),
+                ),
               ),
             ),
-          ),
-
-          const SizedBox(height: 5),
-          //Titulo del libro
-          SizedBox(
-            height: 40,
-            width: 150,
-            child: Text(book.title, maxLines: 2, style: textStyles.titleSmall),
-          ),
-
-          const SizedBox(height: 3),
-
-          //Autor
-          SizedBox(
-            height: 40,
-            width: 150,
-            child: Text(book.author, maxLines: 2, style: textStyles.bodyMedium),
-          ),
-        ],
+        
+            const SizedBox(height: 5),
+            //Titulo del libro
+            SizedBox(
+              height: 40,
+              width: 150,
+              child: Text(book.title, maxLines: 2, style: textStyles.titleSmall),
+            ),
+        
+            const SizedBox(height: 3),
+        
+            //Autor
+            SizedBox(
+              height: 40,
+              width: 150,
+              child: Text(book.author, maxLines: 2, style: textStyles.bodyMedium),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -131,7 +128,7 @@ class _Title extends StatelessWidget {
   Widget build(BuildContext context) {
     final titleStyle = Theme.of(context).textTheme.titleLarge;
     return Container(
-      padding: const EdgeInsets.only(top: 20),
+      padding: const EdgeInsets.only(top: 10),
       margin: const EdgeInsets.symmetric(horizontal: 10),
       child: Row(
         children: [

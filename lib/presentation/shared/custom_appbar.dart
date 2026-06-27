@@ -8,6 +8,7 @@ class CustomAppbar extends StatelessWidget {
     final colors = Theme.of(context).colorScheme;
     final titleStyle = Theme.of(context).textTheme.titleMedium;
 
+  //TODO: Cambiar diseño de appbar
     return SafeArea(
       bottom: false,
       child: Padding(padding: const EdgeInsetsGeometry.fromLTRB(10, 5, 10, 0), child: SizedBox(
@@ -16,7 +17,7 @@ class CustomAppbar extends StatelessWidget {
           children: [
             Icon(Icons.book, color: colors.primary,),
             const SizedBox(width: 5,),
-            Text("Lectario", style: titleStyle,),
+            Center(child: Text("Lectario", style: titleStyle,)),
             const Spacer()
           ],
         ),
