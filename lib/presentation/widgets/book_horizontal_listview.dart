@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:lectario_app/domain/entities/book_preview.dart';
 import 'package:animate_do/animate_do.dart';
 
@@ -45,7 +46,7 @@ class _BookHorizontalListviewState extends State<BookHorizontalListview> {
       child: Column(
         children: [
           _Title(widget.title),
-          const SizedBox(height: 15,),
+          const SizedBox(height: 15),
           Expanded(
             child: ListView.builder(
               itemCount: widget.books.length,
@@ -70,50 +71,59 @@ class _Slide extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final textStyles = Theme.of(context).textTheme;
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 8),
-      child: FadeInRight(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            //Portada del libro
-            SizedBox(
-              width: 150,
-              child: ClipRRect(
-                borderRadius: BorderRadiusGeometry.circular(20),
-                child: FadeInImage(
-                  fit: BoxFit.cover,
-                  height: 220,
-                  fadeOutDuration: const Duration(milliseconds: 100),
-                  fadeInDuration: const Duration(milliseconds: 200),
-                  image: NetworkImage(
-                    book.coverUrl ??
-                        'https://upload.wikimedia.org/wikipedia/commons/thumb/6/65/No-Image-Placeholder.svg/1920px-No-Image-Placeholder.svg.png',
-                  ),
-                  placeholder: const AssetImage(
-                    'assets/loaders/book.gif',
+    return GestureDetector(
+      onTap: () => context.push('/home/0/book/', extra: book),
+      child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 8),
+        child: FadeInRight(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              //Portada del libro
+              SizedBox(
+                width: 150,
+                child: ClipRRect(
+                  borderRadius: BorderRadiusGeometry.circular(20),
+                  child: FadeInImage(
+                    fit: BoxFit.cover,
+                    height: 220,
+                    fadeOutDuration: const Duration(milliseconds: 100),
+                    fadeInDuration: const Duration(milliseconds: 200),
+                    image: NetworkImage(
+                      book.coverUrl ??
+                          'https://upload.wikimedia.org/wikipedia/commons/thumb/6/65/No-Image-Placeholder.svg/1920px-No-Image-Placeholder.svg.png',
+                    ),
+                    placeholder: const AssetImage('assets/loaders/book.gif'),
                   ),
                 ),
               ),
-            ),
-        
-            const SizedBox(height: 5),
-            //Titulo del libro
-            SizedBox(
-              height: 40,
-              width: 150,
-              child: Text(book.title, maxLines: 2, style: textStyles.titleSmall),
-            ),
-        
-            const SizedBox(height: 3),
-        
-            //Autor
-            SizedBox(
-              height: 40,
-              width: 150,
-              child: Text(book.author, maxLines: 2, style: textStyles.bodyMedium),
-            ),
-          ],
+
+              const SizedBox(height: 5),
+              //Titulo del libro
+              SizedBox(
+                height: 40,
+                width: 150,
+                child: Text(
+                  book.title,
+                  maxLines: 2,
+                  style: textStyles.titleSmall,
+                ),
+              ),
+
+              const SizedBox(height: 3),
+
+              //Autor
+              SizedBox(
+                height: 40,
+                width: 150,
+                child: Text(
+                  book.author,
+                  maxLines: 2,
+                  style: textStyles.bodyMedium,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

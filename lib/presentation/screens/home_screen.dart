@@ -16,6 +16,7 @@ class HomeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    //TODO: Crear listen general para errores
     return Scaffold(
       body: IndexedStack(index: viewIndex, children: viewRoutes),
       bottomNavigationBar: CustomBottomNavigation(currentIndex: viewIndex),
