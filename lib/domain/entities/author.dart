@@ -3,6 +3,7 @@ class Author {
   final String personalName;
   final String birthDate;
   final String deathDate;
+  final String biography;
   final int photoId;
 
   Author({
@@ -10,6 +11,7 @@ class Author {
     required this.personalName,
     required this.birthDate,
     required this.deathDate,
+    required this.biography,
     required this.photoId,
   });
 }

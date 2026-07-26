@@ -10,6 +10,7 @@ class AuthorMapper {
       personalName: authorOpenLibrary.personalName,
       birthDate: authorOpenLibrary.birthDate,
       deathDate: authorOpenLibrary.deathDate,
+      biography: authorOpenLibrary.bio,
       photoId: authorOpenLibrary.photos.first,
     );
   }

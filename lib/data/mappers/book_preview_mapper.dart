@@ -11,6 +11,7 @@ class BookPreviewMapper {
     authorId: openLibraryBook.authors.isNotEmpty
         ? openLibraryBook.authors.first.key.replaceAll('/authors/', '')
         : '',
+    editions: openLibraryBook.editionCount,
     coverUrl:
         'https://covers.openlibrary.org/b/id/${openLibraryBook.coverId}-L.jpg',
     publishYear: openLibraryBook.firstPublishYear,

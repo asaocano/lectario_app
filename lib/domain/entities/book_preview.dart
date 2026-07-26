@@ -3,6 +3,7 @@ class BookPreview {
   final String title;
   final String author;
   final String authorId;
+  final int editions;
   final String? coverUrl;
   final int? publishYear;
 
@@ -11,7 +12,8 @@ class BookPreview {
     required this.title,
     required this.author,
     required this.authorId,
+    required this.editions,
     this.coverUrl,
-    this.publishYear 
+    this.publishYear,
   });
 }
