@@ -30,8 +30,8 @@ class AuthorOpenLibraryResponse {
         name: json["name"],
         birthDate: json["birth_date"],
         key: json["key"],
-        deathDate: json["death_date"],
-        bio: json["bio"],
+        deathDate: json["death_date"] ?? '',
+        bio: _bioToString(json["bio"]),
         photos: List<int>.from(json["photos"].map((x) => x)),
         personalName: json["personal_name"],
       );
@@ -44,4 +44,14 @@ class AuthorOpenLibraryResponse {
     "photos": List<dynamic>.from(photos.map((x) => x)),
     "personal_name": personalName,
   };
+
+  static String _bioToString(dynamic bio) {
+    if (bio is String) {
+      return bio;
+    } else if (bio is Map<String, String>) {
+      return bio['value'] ?? '';
+    }
+
+    return "";
+  }
 }

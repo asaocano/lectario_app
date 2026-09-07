@@ -1,7 +1,7 @@
 name: lectario_app
 description: "Aplicación para administrar y compartir tus lecturas con otros lectores."
 publish_to: 'none'
-version: 0.1.0
+version: 0.0.1
 
 environment:
   sdk: ^3.10.7
@@ -9,6 +9,8 @@ environment:
 dependencies:
   animate_do: ^5.1.0
   dio: ^5.9.2
+  drift: ^2.34.3
+  drift_flutter: ^0.3.1
   flutter:
     sdk: flutter
   flutter_dotenv: ^6.0.1
@@ -16,9 +18,12 @@ dependencies:
   go_router: ^17.2.3
   google_fonts: ^8.1.0
   palette_generator_master: ^1.1.0
+  path_provider: ^2.1.6
   riverpod: ^3.2.1
 
 dev_dependencies:
+  build_runner: ^2.15.1
+  drift_dev: ^2.34.0
   flutter_lints: ^6.0.0
   flutter_test:
     sdk: flutter

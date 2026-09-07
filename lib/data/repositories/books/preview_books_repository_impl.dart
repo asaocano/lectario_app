@@ -22,4 +22,9 @@ class BooksRepositoryImpl implements BooksRepository {
   Future<Book> getBookDetails(BookPreview preview) {
     return datasource.getBookDetails(preview);
   }
+
+  @override
+  Future<List<BookPreview>> getBooksByQuery(String query) {
+    return datasource.getBooksByQuery(query);
+  }
 }

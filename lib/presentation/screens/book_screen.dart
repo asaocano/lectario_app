@@ -5,9 +5,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:lectario_app/domain/entities/book.dart';
 import 'package:lectario_app/domain/entities/book_preview.dart';
+import 'package:lectario_app/domain/enums/bookshelf_status.dart';
 import 'package:lectario_app/presentation/providers/authors/author_provider.dart';
 import 'package:lectario_app/presentation/providers/books/book_details_provider.dart';
+import 'package:lectario_app/presentation/providers/localDatabase/local_database_provider.dart';
 import 'package:lectario_app/presentation/providers/shared/cover_gradient_provider.dart';
 
 class BookScreen extends StatelessWidget {
@@ -25,9 +28,14 @@ class BookScreen extends StatelessWidget {
         physics: const ClampingScrollPhysics(),
         slivers: [
           _CustomSliverAppBar(preview: preview, defaultCover: defaultCover),
-          SliverFillRemaining(
-            hasScrollBody: true,
-            child: _BookDetails(preview),
+          SliverToBoxAdapter(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _BookActions(preview: preview),
+                _BookDetails(preview),
+              ],
+            ),
           ),
         ],
       ),
@@ -255,6 +263,100 @@ class _CustomSliverAppBar extends ConsumerWidget {
   }
 }
 
+class _BookActions extends ConsumerWidget {
+  final BookPreview preview;
+  const _BookActions({required this.preview});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final bookshelf = ref.read(bookshelfProvider.notifier);
+    final bookshelfState = ref.watch(bookshelfProvider);
+    final isInWant = bookshelfState.wantToRead.any(
+      (book) => book.id == preview.id,
+    );
+    final isFavorite = bookshelfState.favorites.any(
+      (book) => book.id == preview.id,
+    );
+    final isRead = bookshelfState.read.any((book) => book.id == preview.id);
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 12.0),
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 12.0),
+        decoration: BoxDecoration(
+          color: Colors.grey.withAlpha(20), // Fondo suave
+          borderRadius: BorderRadius.circular(16), // Bordes curvos tipo píldora
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: _buildActionItem(
+                icon: isInWant
+                    ? Icons.bookmark_add_rounded
+                    : Icons.bookmark_add_outlined,
+                label: "Quiero leer",
+                color: Colors.orange,
+                onTap: () => bookshelf.toogleBook(
+                  preview,
+                  BookshelfStatus.wantToRead.value,
+                ),
+              ),
+            ),
+            // Línea divisoria sutil entre botones
+            Container(height: 35, width: 2, color: Colors.grey.withAlpha(20)),
+            Expanded(
+              child: _buildActionItem(
+                icon: isFavorite ? Icons.favorite : Icons.favorite_border,
+                label: "Favorito",
+                color: Colors.red,
+                onTap: () => bookshelf.toogleBook(
+                  preview,
+                  BookshelfStatus.favorite.value,
+                ),
+              ),
+            ),
+            Container(height: 35, width: 2, color: Colors.grey.withAlpha(20)),
+            Expanded(
+              child: _buildActionItem(
+                icon: isRead
+                    ? Icons.bookmark_added
+                    : Icons.bookmark_added_outlined,
+                label: "Leído",
+                color: Colors.green,
+                onTap: () =>
+                    bookshelf.toogleBook(preview, BookshelfStatus.read.value),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildActionItem({
+    required IconData icon,
+    required String label,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, color: color, size: 22),
+          const SizedBox(height: 4),
+          Text(
+            label,
+            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _BookDetails extends ConsumerStatefulWidget {
   final BookPreview preview;
   const _BookDetails(this.preview);
@@ -289,186 +391,184 @@ class _BookDetailsState extends ConsumerState<_BookDetails> {
 
     return DefaultTabController(
       length: 3,
-      child: SafeArea(
-        top: true,
-        bottom: false,
-        child: Column(
-          children: [
-            TabBar(
-              indicatorSize: TabBarIndicatorSize
-                  .tab, //El tamaño de la barra del tab será del tamaño del mismo tab
-              // indicatorColor: const Color(0xFFE27363), //Color de la barra cuando está seleccionado el tab
-              indicatorWeight: 3, //Se hace más grueso el indicador del tab
-              unselectedLabelColor:
-                  Colors.grey, //Color del tab cuando no está seleccionado
-              // labelColor: const Color(0xFFE27363), //Color del tab cuando está seleccionado
-              tabs: const [
-                Tab(icon: Icon(Icons.import_contacts), text: "Sinopsis"),
-                Tab(icon: Icon(Icons.info), text: "Detalles"),
-                Tab(icon: Icon(Icons.person), text: "Autor"),
-              ],
-            ),
-            Expanded(
-              child: TabBarView(
-                children: [
-                  //Sinopsis
-                  Padding(
+      child: Column(
+        children: [
+          TabBar(
+            indicatorSize: TabBarIndicatorSize
+                .tab, //El tamaño de la barra del tab será del tamaño del mismo tab
+            // indicatorColor: const Color(0xFFE27363), //Color de la barra cuando está seleccionado el tab
+            indicatorWeight: 3, //Se hace más grueso el indicador del tab
+            unselectedLabelColor:
+                Colors.grey, //Color del tab cuando no está seleccionado
+            // labelColor: const Color(0xFFE27363), //Color del tab cuando está seleccionado
+            tabs: const [
+              Tab(icon: Icon(Icons.import_contacts), text: "Sinopsis"),
+              Tab(icon: Icon(Icons.info), text: "Detalles"),
+              Tab(icon: Icon(Icons.person), text: "Autor"),
+            ],
+          ),
+          SizedBox(
+            height: 400,
+            child: TabBarView(
+              children: [
+                //Sinopsis
+                SingleChildScrollView(
+                  child: Padding(
                     padding: const EdgeInsets.symmetric(
                       vertical: 25,
                       horizontal: 15,
                     ),
                     child: Text(detailsState.book?.description ?? ''),
                   ),
+                ),
 
-                  //Detalles y categorías
-                  (!detailsState.isLoading && detailsState.book != null)
-                      ?
-                        /// Vista de la pestaña "Detalles" que organiza la información técnica del libro
-                        /// en dos secciones principales: Ficha Técnica (metadatos) y Temas Principales (etiquetas).
-                        SingleChildScrollView(
-                          // Aplica un margen interno homogéneo de 20px alrededor de todo el contenido,
-                          // separando los textos e islas de información de los bordes físicos de la pantalla.
-                          padding: const EdgeInsets.all(20.0),
+                //Detalles y categorías
+                (!detailsState.isLoading && detailsState.book != null)
+                    ?
+                      /// Vista de la pestaña "Detalles" que organiza la información técnica del libro
+                      /// en dos secciones principales: Ficha Técnica (metadatos) y Temas Principales (etiquetas).
+                      SingleChildScrollView(
+                        // Aplica un margen interno homogéneo de 20px alrededor de todo el contenido,
+                        // separando los textos e islas de información de los bordes físicos de la pantalla.
+                        padding: const EdgeInsets.all(20.0),
 
-                          child: Column(
-                            // Alinea todos los elementos hijos (encabezados, contenedores, etiquetas)
-                            // hacia el margen izquierdo de la vista.
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              // ====================================================================
-                              // SECCIÓN 1: ENCABEZADO Y CONTENEDOR DE LA FICHA TÉCNICA
-                              // ====================================================================
-                              const Text(
-                                'Ficha Técnica',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                ),
+                        child: Column(
+                          // Alinea todos los elementos hijos (encabezados, contenedores, etiquetas)
+                          // hacia el margen izquierdo de la vista.
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // ====================================================================
+                            // SECCIÓN 1: ENCABEZADO Y CONTENEDOR DE LA FICHA TÉCNICA
+                            // ====================================================================
+                            const Text(
+                              'Ficha Técnica',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
                               ),
-                              const SizedBox(
-                                height: 10,
-                              ), // Separación vertical hacia la tarjeta
-                              // Tarjeta/Isla de metadatos con fondo tenue y bordes redondeados
-                              Container(
-                                padding: const EdgeInsets.all(
-                                  16,
-                                ), // Espaciado interno de la tarjeta
-                                decoration: BoxDecoration(
-                                  // Canal Alfa en 20 (~8% de opacidad) para un fondo sutil que resalta sobre el tema oscuro/claro
-                                  color: Colors.grey.withAlpha(20),
-                                  borderRadius: BorderRadius.circular(
-                                    12,
-                                  ), // Curvatura estilizada de las esquinas
-                                ),
-                                child: Column(
-                                  children: [
-                                    // Fila de Año de Publicación
-                                    _buildDetailRow(
-                                      Icons.calendar_today_outlined,
-                                      'Año de publicación',
-                                      "${detailsState.book!.preview.publishYear}",
-                                    ),
-                                    const Divider(
-                                      height: 1,
-                                    ), // Línea divisoria sutil entre filas
-                                    // Fila de Idioma Original
-                                    _buildDetailRow(
-                                      Icons.language_outlined,
-                                      'Idioma original',
-                                      'Inglés',
-                                    ),
-                                    const Divider(height: 1),
-
-                                    // Fila de Ediciones
-                                    _buildDetailRow(
-                                      Icons.menu_book_outlined,
-                                      'Ediciones registradas',
-                                      detailsState.book!.preview.editions > 1000
-                                          ? '1000+'
-                                          : "${detailsState.book!.preview.editions}",
-                                    ),
-                                  ],
-                                ),
+                            ),
+                            const SizedBox(
+                              height: 10,
+                            ), // Separación vertical hacia la tarjeta
+                            // Tarjeta/Isla de metadatos con fondo tenue y bordes redondeados
+                            Container(
+                              padding: const EdgeInsets.all(
+                                16,
+                              ), // Espaciado interno de la tarjeta
+                              decoration: BoxDecoration(
+                                // Canal Alfa en 20 (~8% de opacidad) para un fondo sutil que resalta sobre el tema oscuro/claro
+                                color: Colors.grey.withAlpha(20),
+                                borderRadius: BorderRadius.circular(
+                                  12,
+                                ), // Curvatura estilizada de las esquinas
                               ),
+                              child: Column(
+                                children: [
+                                  // Fila de Año de Publicación
+                                  _buildDetailRow(
+                                    Icons.calendar_today_outlined,
+                                    'Año de publicación',
+                                    "${detailsState.book!.preview.publishYear}",
+                                  ),
+                                  const Divider(
+                                    height: 1,
+                                  ), // Línea divisoria sutil entre filas
+                                  // Fila de Idioma Original
+                                  _buildDetailRow(
+                                    Icons.language_outlined,
+                                    'Idioma original',
+                                    'Inglés',
+                                  ),
+                                  const Divider(height: 1),
 
-                              const SizedBox(
-                                height: 24,
-                              ), // Separación amplia entre bloques temáticos
-                              // ====================================================================
-                              // SECCIÓN 2: TEMAS Y GÉNEROS (CHIPS Y WRAP)
-                              // ====================================================================
-                              const Text(
-                                'Temas Principales',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                ),
+                                  // Fila de Ediciones
+                                  _buildDetailRow(
+                                    Icons.menu_book_outlined,
+                                    'Ediciones registradas',
+                                    detailsState.book!.preview.editions > 1000
+                                        ? '1000+'
+                                        : "${detailsState.book!.preview.editions}",
+                                  ),
+                                ],
                               ),
-                              const SizedBox(
-                                height: 12,
-                              ), // Separación hacia las etiquetas
-                              // Reemplaza a 'Column' o 'Row' para evitar errores de desbordamiento (Overflow).
-                              // Coloca las etiquetas de forma horizontal y salta automáticamente a la siguiente
-                              // línea cuando la etiqueta actual sobrepasa el ancho de la pantalla.
-                              Wrap(
-                                spacing:
-                                    8.0, // Distancia horizontal entre cada Chip
-                                runSpacing:
-                                    8.0, // Distancia vertical entre las filas creadas
-                                children: detailsState.book!.subjects
-                                    // 1. CONTROL DE RECURSOS: Se filtran y toman únicamente las primeras 6 categorías
-                                    //    de Open Library para no saturar la vista con temas secundarios.
-                                    .take(6)
-                                    // 2. TRANSFORMACIÓN: Convierte cada cadena de texto en un widget 'Chip' estilizado.
-                                    .map(
-                                      (subject) => Chip(
-                                        // Icono decorativo al inicio del chip
-                                        avatar: const Icon(
-                                          Icons.bookmark,
-                                          size: 14,
-                                          // color: Color(
-                                          //   0xFFE27363,
-                                          // ), // Color acento coral unificado de la app
-                                        ),
-                                        label: Text(
-                                          subject,
-                                          style: const TextStyle(
-                                            fontSize: 12,
-                                            fontWeight: FontWeight.w500,
-                                          ),
-                                        ),
-                                        // Fondo con el color acento coral al ~10% de opacidad (withAlpha: 25)
-                                        // backgroundColor: const Color(
+                            ),
+
+                            const SizedBox(
+                              height: 24,
+                            ), // Separación amplia entre bloques temáticos
+                            // ====================================================================
+                            // SECCIÓN 2: TEMAS Y GÉNEROS (CHIPS Y WRAP)
+                            // ====================================================================
+                            const Text(
+                              'Temas Principales',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            const SizedBox(
+                              height: 12,
+                            ), // Separación hacia las etiquetas
+                            // Reemplaza a 'Column' o 'Row' para evitar errores de desbordamiento (Overflow).
+                            // Coloca las etiquetas de forma horizontal y salta automáticamente a la siguiente
+                            // línea cuando la etiqueta actual sobrepasa el ancho de la pantalla.
+                            Wrap(
+                              spacing:
+                                  8.0, // Distancia horizontal entre cada Chip
+                              runSpacing:
+                                  8.0, // Distancia vertical entre las filas creadas
+                              children: detailsState.book!.subjects
+                                  // 1. CONTROL DE RECURSOS: Se filtran y toman únicamente las primeras 6 categorías
+                                  //    de Open Library para no saturar la vista con temas secundarios.
+                                  .take(6)
+                                  // 2. TRANSFORMACIÓN: Convierte cada cadena de texto en un widget 'Chip' estilizado.
+                                  .map(
+                                    (subject) => Chip(
+                                      // Icono decorativo al inicio del chip
+                                      avatar: const Icon(
+                                        Icons.bookmark,
+                                        size: 14,
+                                        // color: Color(
                                         //   0xFFE27363,
-                                        // ).withAlpha(25),
-                                        // Otorga la forma de píldora (ovalada) y elimina el borde gris nativo
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(
-                                            20,
-                                          ),
-                                          side: BorderSide.none,
+                                        // ), // Color acento coral unificado de la app
+                                      ),
+                                      label: Text(
+                                        subject,
+                                        style: const TextStyle(
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w500,
                                         ),
                                       ),
-                                    )
-                                    .toList(), // Convierte la iteración de mapas nuevamente en una lista de Widgets
-                              ),
-                            ],
-                          ),
-                        )
-                      : const SizedBox(),
-
-                  //Información del autor
-                  (authorState.isLoading || authorState.author == null)
-                      ? const SizedBox()
-                      : _AuthorInfo(
-                          authorState: authorState,
-                          textStyles: textStyles,
+                                      // Fondo con el color acento coral al ~10% de opacidad (withAlpha: 25)
+                                      // backgroundColor: const Color(
+                                      //   0xFFE27363,
+                                      // ).withAlpha(25),
+                                      // Otorga la forma de píldora (ovalada) y elimina el borde gris nativo
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(20),
+                                        side: BorderSide.none,
+                                      ),
+                                    ),
+                                  )
+                                  .toList(), // Convierte la iteración de mapas nuevamente en una lista de Widgets
+                            ),
+                          ],
                         ),
-                ],
-              ),
+                      )
+                    : const SizedBox(),
+
+                //Información del autor
+                //TODO: Agregar componente de respaldo si no hay un autor
+                (authorState.isLoading || authorState.author == null)
+                    ? const SizedBox()
+                    : _AuthorInfo(
+                        authorState: authorState,
+                        textStyles: textStyles,
+                      ),
+              ],
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -482,71 +582,94 @@ class _AuthorInfo extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-      child: Column(
-        children: [
-          Row(
-            children: [
-              Column(
-                children: [
-                  SizedBox(
-                    width: 120,
-                    height: 120,
-                    child: ClipRRect(
-                      borderRadius: BorderRadiusGeometry.circular(20),
-                      child: FadeInImage(
-                        fit: BoxFit.cover,
-                        height: 220,
-                        fadeOutDuration: const Duration(milliseconds: 100),
-                        fadeInDuration: const Duration(milliseconds: 200),
-                        image: NetworkImage(
-                          authorState.author != null
-                              ? "https://covers.openlibrary.org/a/id/${authorState.author!.photoId}-L.jpg"
-                              : 'https://upload.wikimedia.org/wikipedia/commons/thumb/6/65/No-Image-Placeholder.svg/1920px-No-Image-Placeholder.svg.png',
-                        ),
-                        placeholder: const AssetImage(
-                          'assets/loaders/book.gif',
+    return SingleChildScrollView(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+        child: Column(
+          children: [
+            Row(
+              children: [
+                Column(
+                  children: [
+                    SizedBox(
+                      width: 120,
+                      height: 120,
+                      child: ClipRRect(
+                        borderRadius: BorderRadiusGeometry.circular(20),
+                        child: FadeInImage(
+                          fit: BoxFit.cover,
+                          height: 220,
+                          fadeOutDuration: const Duration(milliseconds: 100),
+                          fadeInDuration: const Duration(milliseconds: 200),
+                          image: NetworkImage(
+                            authorState.author != null
+                                ? "https://covers.openlibrary.org/a/id/${authorState.author!.photoId}-L.jpg"
+                                : 'https://upload.wikimedia.org/wikipedia/commons/thumb/6/65/No-Image-Placeholder.svg/1920px-No-Image-Placeholder.svg.png',
+                          ),
+                          placeholder: const AssetImage(
+                            'assets/loaders/book.gif',
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                ],
-              ),
-              Padding(
-                padding: const EdgeInsets.only(left: 10),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      authorState.author!.name,
-                      style: textStyles.titleLarge,
-                    ),
-                    Text(
-                      "(${authorState.author!.personalName})",
-                      style: textStyles.labelSmall,
-                    ),
-                    const SizedBox(height: 15),
-                    Text(
-                      "${authorState.author!.birthDate} - ${authorState.author!.deathDate}",
-                      style: textStyles.bodySmall,
-                    ),
                   ],
                 ),
-              ),
-            ],
-          ),
-          Row(
-            children: [
-              Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.only(top: 10),
-                  child: Text(authorState.author!.biography),
+                Padding(
+                  padding: const EdgeInsets.only(left: 10),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        authorState.author!.name,
+                        style: textStyles.titleLarge,
+                      ),
+                      Text(
+                        "(${authorState.author!.personalName})",
+                        style: textStyles.labelSmall,
+                      ),
+                      const SizedBox(height: 15),
+
+                      Row(
+                        children: [
+                          const Icon(Icons.cake_rounded, size: 16),
+                          const SizedBox(width: 5),
+                          Text(
+                            authorState.author!.birthDate,
+                            style: textStyles.bodySmall,
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 5),
+
+                      authorState.author!.deathDate.isNotEmpty
+                          ? Row(
+                              children: [
+                                const Icon(Icons.church, size: 16),
+                                const SizedBox(width: 5),
+                                Text(
+                                  authorState.author!.deathDate,
+                                  style: textStyles.bodySmall,
+                                ),
+                              ],
+                            )
+                          : const SizedBox(),
+                    ],
+                  ),
                 ),
-              ),
-            ],
-          ),
-        ],
+              ],
+            ),
+            Row(
+              children: [
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.only(top: 10),
+                    child: Text(authorState.author!.biography),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
