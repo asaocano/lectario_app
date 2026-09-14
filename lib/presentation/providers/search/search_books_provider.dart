@@ -24,6 +24,12 @@ class SearchBooksNotifier extends StateNotifier<List<BookPreview>> {
     : super([]);
 
   Future<List<BookPreview>> searchBooksByQuery(String query) async {
+    if (query.isEmpty) {
+      ref.read(searchQueryProvider.notifier).update((state) => "");
+      state = [];
+      return [];
+    }
+
     final List<BookPreview> books = await searchBooks(query);
     ref.read(searchQueryProvider.notifier).update((state) => query);
 

@@ -2,12 +2,13 @@ import 'dart:async';
 
 import 'package:animate_do/animate_do.dart';
 import 'package:flutter/material.dart';
-import 'package:lectario_app/domain/entities/book.dart';
 import 'package:lectario_app/domain/entities/book_preview.dart';
+import 'package:lectario_app/presentation/screens/barcode_scanner_screen.dart';
 
 typedef SearchBooksCallback = Future<List<BookPreview>> Function(String query);
 
 class SearchBookDelegate extends SearchDelegate<BookPreview?> {
+  String _lastSavedQuery = '';
   final SearchBooksCallback searchBooks;
   List<BookPreview> initialBooks;
   StreamController<List<BookPreview>> debouncedBooks =
@@ -26,27 +27,30 @@ class SearchBookDelegate extends SearchDelegate<BookPreview?> {
 
   /// Función que controlará los cambios de la query (texto) que ingrese el usuario
   void _onQueryChanged(String query) {
-    isLoadingStream.add(
-      true,
-    ); //* Se agrega un nuevo estado de "cargando" (el estado se cambia a true) para mostrar el widget que gira
-    //* Si el usuario sigue escribiendo antes de que se cumplan los 500ms, se cancela el timer anterior para evitar lanzar una búsqueda innecesaria.
+    isLoadingStream.add(true);
     if (_debounceTimer?.isActive ?? false) {
       _debounceTimer!.cancel();
     }
 
     _debounceTimer = Timer(const Duration(milliseconds: 500), () async {
-      final books = await searchBooks(
-        query,
-      ); //* Ejecuta el callback que obtiene los libros (normalmente desde una API)
-      debouncedBooks.add(
-        books,
-      ); //* Agrega los libros al stream para que se muestren en la lista
-      initialBooks =
-          books; //* Actualiza los libros iniciales para que el StreamBuilder tenga el último resultado como base si se reconstruye.
-      isLoadingStream.add(
-        false,
-      ); //* Se termina la petición para que se quite el widget girando y se muestre el de borrar
+      final books = await searchBooks(query);
+      if (debouncedBooks.isClosed || isLoadingStream.isClosed) {
+        return;
+      }
+      debouncedBooks.add(books);
+      initialBooks = books;
+      isLoadingStream.add(false);
     });
+  }
+
+  @override
+  void close(BuildContext context, BookPreview? result) {
+    // Si la búsqueda no estaba vacía al momento de cerrar,
+    // guardamos el texto actual para que se mantenga la próxima vez.
+    if (query.isNotEmpty) {
+      _lastSavedQuery = query;
+    }
+    super.close(context, result);
   }
 
   Widget _buildResultsAndSuggestions() {
@@ -54,7 +58,44 @@ class SearchBookDelegate extends SearchDelegate<BookPreview?> {
       initialData: initialBooks,
       stream: debouncedBooks.stream,
       builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                CircularProgressIndicator(), //TODO: Agregar mejor animación de cargando
+                SizedBox(height: 12),
+                Text('Buscando libros...'),
+              ],
+            ),
+          );
+        }
+
+        if (snapshot.hasError) {
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.error_outline, color: Colors.red, size: 48),
+                const SizedBox(height: 12),
+                Text(
+                  'Ocurrió un error al buscar', //TODO: Agregar animación para 
+                  textAlign: TextAlign.center,
+                ),
+              ],
+            ),
+          );
+        }
+
         final books = snapshot.data ?? [];
+
+        if (books.isEmpty &&
+            query.isNotEmpty &&
+            snapshot.connectionState == ConnectionState.done) {
+          return Center(
+            child: Text("No se encontraron libros relacionados :("),
+          );
+        }
 
         return ListView.builder(
           itemCount: books.length,
@@ -74,23 +115,20 @@ class SearchBookDelegate extends SearchDelegate<BookPreview?> {
     );
   }
 
-  /// Label que tendrá el buscador
   @override
-  String? get searchFieldLabel => "Buscar libro";
+  String? get searchFieldLabel => "Escanear ISBN o buscar";
 
-  /// Muestra acciones que tendrá la pantalla de búsqueda (¿Qué botones o widgets tendrá?)
+  /// Muestra acciones que tendrá la pantalla de búsqueda
   @override
   List<Widget>? buildActions(BuildContext context) {
     return [
       StreamBuilder(
-        //* Reconstruye la UI cada vez que el stream emite un nuevo valor.
-        initialData: false, //* Valor inicial
-        stream: isLoadingStream
-            .stream, //* Se suscribe al stream (Los cambios a los que estará pendiente)
+        initialData: false,
+        stream: isLoadingStream.stream,
         builder: (context, snapshot) {
-          if (snapshot.data ?? false) {
-            //* Último valor emitido (Si no hay un valor se usa uno por defecto)
-            //* Si está cargando, muestra un widget girando indicando que se está "procesando" su búsqueda
+          final isLoading = snapshot.data ?? false;
+
+          if (isLoading) {
             return SpinPerfect(
               infinite: true,
               spins: 20,
@@ -102,25 +140,45 @@ class SearchBookDelegate extends SearchDelegate<BookPreview?> {
             );
           }
 
-          //* Si no está cargando, se muestra botón para limpiar búsqueda
           return Row(
+            mainAxisSize: MainAxisSize.min,
             children: [
-              FadeIn(
-                animate: query.isNotEmpty,
-                duration: const Duration(milliseconds: 200),
-                child: IconButton(
-                  onPressed: () {},
-                  icon: const Icon(Icons.camera_alt_outlined),
-                ),
+              // 1. Botón de la Cámara: SIEMPRE VISIBLE
+              IconButton(
+                icon: const Icon(Icons.camera_alt_outlined),
+                onPressed: () async {
+                  // 1. Abrir la pantalla del escáner y esperar el resultado
+                  final String? scannedIsbn = await Navigator.push<String>(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const BarcodeScannerScreen(),
+                    ),
+                  );
+
+                  // 2. Si se escaneó un ISBN válido, se asigna al 'query' de la búsqueda
+                  if (scannedIsbn != null && scannedIsbn.isNotEmpty) {
+                    query =
+                        scannedIsbn; // Al reasignar query, 'buildSuggestions' disparará el debounce automáticamente
+                  }
+                },
               ),
-              FadeIn(
-                animate: query.isNotEmpty,
-                duration: const Duration(microseconds: 200),
-                child: IconButton(
-                  onPressed: () => query = '',
-                  icon: const Icon(Icons.clear_rounded),
+
+              // 2. Botón para Limpiar Texto: Solo visible si hay texto en el input
+              if (query.isNotEmpty)
+                FadeIn(
+                  duration: const Duration(milliseconds: 200),
+                  child: IconButton(
+                    onPressed: () {
+                      query = ''; // Limpia el texto en pantalla
+                      _lastSavedQuery =
+                          ''; // Resetea también la búsqueda guardada
+                      showSuggestions(
+                        context,
+                      ); // Fuerza a la UI a refrescarse como limpia
+                    },
+                    icon: const Icon(Icons.clear_rounded),
+                  ),
                 ),
-              ),
             ],
           );
         },
@@ -128,40 +186,39 @@ class SearchBookDelegate extends SearchDelegate<BookPreview?> {
     ];
   }
 
-  /// ¿Qué widgets tendrá ANTES de la barra de búsqueda? (Generalmente es el botón para regresar)
   @override
   Widget? buildLeading(BuildContext context) {
     return IconButton(
       onPressed: () {
-        _clearStreams(); //* Cierra los streams a los que está suscrito
-        close(
-          context,
-          null,
-        ); //* Ejecuta la función para cerrar búsqueda o regresar (Se manda null para que la pantalla anterior no haga nada)
+        _clearStreams();
+        close(context, null);
       },
       icon: const Icon(Icons.arrow_back_ios_new),
     );
   }
 
-  /// Indica qué se hará al FINALIZAR la búsqueda (Cuando el usuario presione el botón "Aceptar" o el que permita completar la búsqueda)
   @override
   Widget buildResults(BuildContext context) {
+    _lastSavedQuery = query; // Actualizamos el último texto buscado
     return _buildResultsAndSuggestions();
   }
 
-  /// Indica qué se hará MIENTRAS se realiza la búsqueda (Mientras el usuario escribe)
   @override
   Widget buildSuggestions(BuildContext context) {
-    _onQueryChanged(
-      query,
-    ); //* Reacciona al nuevo valor de la query (El texto de búsqueda) ejecutando el debounce
-    return _buildResultsAndSuggestions(); //* Función que realiza la búsqueda
+    if (query.isEmpty && _lastSavedQuery.isNotEmpty) {
+      query = _lastSavedQuery;
+    }
+    _onQueryChanged(query);
+    return _buildResultsAndSuggestions();
   }
 }
 
 class _Book extends StatelessWidget {
   final BookPreview preview;
   final Function onBookSelected;
+  final String cover =
+      "https://upload.wikimedia.org/wikipedia/commons/thumb/6/65/No-Image-Placeholder.svg/1920px-No-Image-Placeholder.svg.png";
+
   const _Book({required this.preview, required this.onBookSelected});
 
   @override
@@ -177,33 +234,26 @@ class _Book extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
         child: Row(
           children: [
-            //Portada del libro
             SizedBox(
               width: size.width * 0.2,
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(20),
-                child: Image.network(
-                  preview.coverUrl ??
-                      'https://upload.wikimedia.org/wikipedia/commons/thumb/6/65/No-Image-Placeholder.svg/1920px-No-Image-Placeholder.svg.png',
-                  loadingBuilder: (context, child, loadingProgress) =>
-                      FadeIn(child: child),
+                child: FadeInImage(
+                  fit: BoxFit.cover,
+                  height: 120,
+                  fadeOutDuration: const Duration(milliseconds: 100),
+                  fadeInDuration: const Duration(milliseconds: 200),
+                  placeholder: const AssetImage('assets/loaders/book.gif'),
+                  image: NetworkImage(preview.coverUrl ?? cover),
                 ),
               ),
             ),
             const SizedBox(width: 10),
-
-            //Título
             SizedBox(
               width: size.width * 0.7,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(preview.title, style: textStyles.titleMedium),
-                  //? TODO: ¿Agregar algo más? Tal vez el autor
-                  // Row(children: [
-
-                  // ],)
-                ],
+                children: [Text(preview.title, style: textStyles.titleMedium)],
               ),
             ),
           ],

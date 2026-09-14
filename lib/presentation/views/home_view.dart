@@ -12,14 +12,14 @@ class HomeView extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final booksState = ref.watch(previewBooksProvider);
-    final areCatalogsLoading = ref.watch(loadingBooksProvider);
+    final areCatalogsReady = ref.watch(loadingBooksProvider);
 
-    if (areCatalogsLoading) {
+    if (!areCatalogsReady) {
       return const Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            CircularProgressIndicator(strokeWidth: 2),
+            CircularProgressIndicator(strokeWidth: 2), //TODO: Agregar mejor animación de cargando
             SizedBox(height: 15),
             Text("Cargando información. Por favor, espera."),
           ],

@@ -402,9 +402,9 @@ class _BookDetailsState extends ConsumerState<_BookDetails> {
                 Colors.grey, //Color del tab cuando no está seleccionado
             // labelColor: const Color(0xFFE27363), //Color del tab cuando está seleccionado
             tabs: const [
-              Tab(icon: Icon(Icons.import_contacts), text: "Sinopsis"),
-              Tab(icon: Icon(Icons.info), text: "Detalles"),
-              Tab(icon: Icon(Icons.person), text: "Autor"),
+              Tab(icon: Icon(Icons.import_contacts), text: "Sinopsis"), //TODO: Agregar bak en caso de que no exista (¿Ocultar o mostrar texto genérico?) Agregar animación de cargando
+              Tab(icon: Icon(Icons.info), text: "Detalles"), //TODO: Agregar bak en caso de que no exista (¿Ocultar o mostrar texto genérico?) Agregar animación de cargando
+              Tab(icon: Icon(Icons.person), text: "Autor"), //TODO: Agregar bak en caso de que no exista (¿Ocultar o mostrar texto genérico?) Agregar animación de cargando
             ],
           ),
           SizedBox(
@@ -558,7 +558,6 @@ class _BookDetailsState extends ConsumerState<_BookDetails> {
                     : const SizedBox(),
 
                 //Información del autor
-                //TODO: Agregar componente de respaldo si no hay un autor
                 (authorState.isLoading || authorState.author == null)
                     ? const SizedBox()
                     : _AuthorInfo(
@@ -668,6 +667,7 @@ class _AuthorInfo extends StatelessWidget {
                 ),
               ],
             ),
+            const SizedBox(height: 30,)
           ],
         ),
       ),

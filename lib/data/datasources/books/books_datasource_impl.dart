@@ -8,6 +8,7 @@ import 'package:lectario_app/domain/datasources/books/books_datasource.dart';
 import 'package:lectario_app/domain/entities/book.dart';
 import 'package:lectario_app/domain/entities/book_category.dart';
 import 'package:lectario_app/domain/entities/book_preview.dart';
+import 'package:lectario_app/utils/utils.dart';
 
 class BooksDatasourceImpl extends BooksDatasource {
   final ApiClient apiClient;
@@ -67,14 +68,16 @@ class BooksDatasourceImpl extends BooksDatasource {
   Future<List<BookPreview>> getBooksByQuery(String query) async {
     // Si la búsqueda viene vacía, evitamos hacer una petición innecesaria a la red
     if (query.trim().isEmpty) return [];
+    bool isIsbn = Utils.isQueryAnIsbn(query);
 
     try {
       final response = await apiClient.get(
         'search.json',
         queryParams: {
-          'title': query,
+          isIsbn ? 'isbn' : 'title': query,
           'language': 'spa',
-          'fields': 'key,title,author_name,author_key,cover_i,first_publish_year, edition_count'
+          'fields':
+              'key,title,author_name,author_key,cover_i,first_publish_year, edition_count',
         },
       );
 
@@ -82,6 +85,25 @@ class BooksDatasourceImpl extends BooksDatasource {
       return books;
     } catch (e) {
       // Manejo de errores resiliente
+      return [];
+    }
+  }
+
+  @override
+  Future<List<BookPreview>> getBooksByIsbn(String isbn) async {
+    try {
+      final response = await apiClient.get(
+        'isbn/$isbn.json',
+        queryParams: {
+          'language': 'spa',
+          'fields':
+              'key,title,author_name,author_key,cover_i,first_publish_year, edition_count',
+        },
+      );
+
+      final books = _searchResponseToBooks(response.data);
+      return books;
+    } catch (e) {
       return [];
     }
   }

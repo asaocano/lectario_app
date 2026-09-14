@@ -28,11 +28,11 @@ class AuthorOpenLibraryResponse {
   factory AuthorOpenLibraryResponse.fromJson(Map<String, dynamic> json) =>
       AuthorOpenLibraryResponse(
         name: json["name"],
-        birthDate: json["birth_date"],
+        birthDate: json["birth_date"] ?? '',
         key: json["key"],
         deathDate: json["death_date"] ?? '',
         bio: _bioToString(json["bio"]),
-        photos: List<int>.from(json["photos"].map((x) => x)),
+        photos: List<int>.from(json["photos"].map((x) => x)), //TODO: Bak cuando el autor no tiene foto
         personalName: json["personal_name"],
       );
 
