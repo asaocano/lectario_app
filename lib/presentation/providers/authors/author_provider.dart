@@ -31,6 +31,10 @@ class AuthorNotifier extends StateNotifier<AuthorState> {
       );
     }
   }
+
+  void resetState() {
+    state = AuthorState();
+  }
 }
 
 class AuthorState {

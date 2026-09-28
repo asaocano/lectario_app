@@ -32,8 +32,8 @@ class AuthorOpenLibraryResponse {
         key: json["key"],
         deathDate: json["death_date"] ?? '',
         bio: _bioToString(json["bio"]),
-        photos: List<int>.from(json["photos"].map((x) => x)), //TODO: Bak cuando el autor no tiene foto
-        personalName: json["personal_name"],
+        photos: List<int>.from(json["photos"] ?? [0]),
+        personalName: json["personal_name"] ?? '',
       );
 
   Map<String, dynamic> toJson() => {
