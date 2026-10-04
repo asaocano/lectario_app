@@ -18,8 +18,8 @@ class CustomBottomNavigation extends StatelessWidget {
       onTap: (value) => onItemTap(context, value),
       items: [
         BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Inicio'),
-        BottomNavigationBarItem(icon: Icon(Icons.explore), label: 'Descubre'),
-        BottomNavigationBarItem(icon: Icon(Icons.favorite), label: 'Favoritos'),
+        BottomNavigationBarItem(icon: Icon(Icons.auto_stories), label: 'Mi librero'),
+        BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Perfil'),
       ],
     );
   }

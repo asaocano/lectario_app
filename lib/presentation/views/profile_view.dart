@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-class DiscoverView extends StatelessWidget {
-  const DiscoverView({super.key});
+class ProfileView extends StatelessWidget {
+  const ProfileView({super.key});
 
   @override
   Widget build(BuildContext context) {

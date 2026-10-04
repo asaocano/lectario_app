@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lectario_app/config/database/database.dart';
 import 'package:lectario_app/presentation/views/views.dart';
 import 'package:lectario_app/presentation/shared/custom_bottom_navigation.dart';
 
@@ -10,8 +11,8 @@ class HomeScreen extends StatelessWidget {
 
   final viewRoutes = const <Widget>[
     HomeView(),
-    DiscoverView(),
-    FavoritesView(),
+    BookshelfView(),
+    ProfileView(),
   ];
 
   @override

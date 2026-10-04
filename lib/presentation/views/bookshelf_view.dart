@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lectario_app/presentation/providers/localDatabase/local_database_provider.dart';
 
-class FavoritesView extends ConsumerWidget {
-  const FavoritesView({super.key});
+class BookshelfView extends ConsumerWidget {
+  const BookshelfView({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {

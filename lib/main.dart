@@ -7,8 +7,8 @@ import 'package:lectario_app/config/theme/app_theme.dart';
 
 Future<void> main() async {
   await dotenv.load();
-  final deleteQuery = db.delete(db.bookshelf);
-  await deleteQuery.go();
+  // final deleteQuery = db.delete(db.bookshelf);
+  // await deleteQuery.go();
   runApp(ProviderScope(child: const MainApp()));
 }
 

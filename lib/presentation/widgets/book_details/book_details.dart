@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lectario_app/domain/entities/book_preview.dart';
 import 'package:lectario_app/presentation/providers/authors/author_provider.dart';
 import 'package:lectario_app/presentation/providers/books/book_details_provider.dart';
+import 'package:lectario_app/presentation/widgets/book_horizontal_listview.dart';
 
 class BookDetailsSection extends ConsumerStatefulWidget {
   final BookPreview preview;
@@ -24,6 +25,9 @@ class _BookDetailsSectionState extends ConsumerState<BookDetailsSection> {
           .loadDetails(preview: widget.preview);
 
       ref.read(authorsProvider.notifier).loadAuthor(widget.preview.authorId);
+      ref
+          .read(authorsProvider.notifier)
+          .loadAuthorBooks(widget.preview.authorId);
     });
   }
 
@@ -123,16 +127,24 @@ class _BookDetailsSectionState extends ConsumerState<BookDetailsSection> {
             _AuthorCardSection(author: authorState.author!),
             const SizedBox(height: 32),
           ],
+
+          // ====================================================================
+          // 4. MÁS LIBROS DEL AUTOR
+          // ====================================================================
+          if (authorState.authorBooks.isNotEmpty) ...[
+            BookHorizontalListview(
+              title: "Más sobre el autor",
+              books: authorState.authorBooks
+                  .where((book) => book.id != widget.preview.id)
+                  .toList(),
+              loadCategory: () {},
+            ),
+          ],
         ],
       ),
     );
   }
 }
-
-// ====================================================================
-// WIDGETS AUXILIARES CON DISEÑO MEJORADO
-// ====================================================================
-
 /// Título estandarizado de sección
 class _SectionTitle extends StatelessWidget {
   final String title;
