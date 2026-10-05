@@ -1,9 +1,7 @@
 // final localDatabaseProvider =
 
 import 'package:lectario_app/data/repositories/localDatabase/local_storage_repository_impl.dart';
-import 'package:lectario_app/domain/entities/book.dart';
 import 'package:lectario_app/domain/entities/book_preview.dart';
-import 'package:lectario_app/domain/enums/bookshelf_status.dart';
 import 'package:lectario_app/presentation/providers/localDatabase/local_storage_provider.dart';
 import 'package:riverpod/legacy.dart';
 

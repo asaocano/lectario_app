@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:lectario_app/domain/entities/book_preview.dart';
 import 'package:animate_do/animate_do.dart';
+import 'package:lectario_app/domain/entities/book_preview.dart';
 
 class BookHorizontalListview extends StatefulWidget {
   final String title;
@@ -16,7 +16,8 @@ class BookHorizontalListview extends StatefulWidget {
   });
 
   @override
-  State<BookHorizontalListview> createState() => _BookHorizontalListviewState();
+  State<BookHorizontalListview> createState() =>
+      _BookHorizontalListviewState();
 }
 
 class _BookHorizontalListviewState extends State<BookHorizontalListview> {
@@ -26,7 +27,7 @@ class _BookHorizontalListviewState extends State<BookHorizontalListview> {
   void initState() {
     super.initState();
     scrollController.addListener(() {
-      if ((scrollController.position.pixels + 50) >=
+      if ((scrollController.position.pixels + 100) >=
           scrollController.position.maxScrollExtent) {
         widget.loadCategory();
       }
@@ -42,13 +43,15 @@ class _BookHorizontalListviewState extends State<BookHorizontalListview> {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: 370,
+      height: 290, // Altura optimizada para la portada 2:3 + textos
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _Title(widget.title),
-          const SizedBox(height: 15),
+          const SizedBox(height: 12),
           Expanded(
             child: ListView.builder(
+              padding: const EdgeInsets.symmetric(horizontal: 12),
               itemCount: widget.books.length,
               scrollDirection: Axis.horizontal,
               controller: scrollController,
@@ -70,56 +73,69 @@ class _Slide extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final textStyles = Theme.of(context).textTheme;
+    final theme = Theme.of(context);
+
     return GestureDetector(
       onTap: () => context.push('/home/0/book/', extra: book),
       child: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 8),
+        width: 130, // Ancho consistente para mantener la proporción 2:3
+        margin: const EdgeInsets.symmetric(horizontal: 6),
         child: FadeInRight(
+          duration: const Duration(milliseconds: 300),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              //Portada del libro
-              SizedBox(
-                width: 150,
-                child: ClipRRect(
-                  borderRadius: BorderRadiusGeometry.circular(20),
-                  child: FadeInImage(
-                    fit: BoxFit.cover,
-                    height: 220,
-                    fadeOutDuration: const Duration(milliseconds: 100),
-                    fadeInDuration: const Duration(milliseconds: 200),
-                    image: NetworkImage(
-                      book.coverUrl ??
-                          'https://upload.wikimedia.org/wikipedia/commons/thumb/6/65/No-Image-Placeholder.svg/1920px-No-Image-Placeholder.svg.png',
+              // Portada del libro con relación de aspecto 2:3 y bordes estandarizados
+              AspectRatio(
+                aspectRatio: 2 / 3,
+                child: Container(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.12),
+                        blurRadius: 6,
+                        offset: const Offset(0, 3),
+                      ),
+                    ],
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: FadeInImage(
+                      fit: BoxFit.cover,
+                      fadeOutDuration: const Duration(milliseconds: 100),
+                      fadeInDuration: const Duration(milliseconds: 200),
+                      image: NetworkImage(
+                        book.coverUrl ??
+                            'https://upload.wikimedia.org/wikipedia/commons/thumb/6/65/No-Image-Placeholder.svg/1920px-No-Image-Placeholder.svg.png',
+                      ),
+                      placeholder: const AssetImage('assets/loaders/book.gif'),
                     ),
-                    placeholder: const AssetImage('assets/loaders/book.gif'),
                   ),
                 ),
               ),
 
-              const SizedBox(height: 5),
-              //Titulo del libro
-              SizedBox(
-                height: 40,
-                width: 150,
-                child: Text(
-                  book.title,
-                  maxLines: 2,
-                  style: textStyles.titleSmall,
+              const SizedBox(height: 8),
+
+              // Título del libro
+              Text(
+                book.title,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  fontWeight: FontWeight.bold,
                 ),
               ),
 
-              const SizedBox(height: 3),
+              const SizedBox(height: 2),
 
-              //Autor
-              SizedBox(
-                height: 40,
-                width: 150,
-                child: Text(
-                  book.author,
-                  maxLines: 2,
-                  style: textStyles.bodyMedium,
+              // Autor del libro
+              Text(
+                book.author,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: theme.textTheme.labelSmall?.copyWith(
+                  color: theme.textTheme.labelSmall?.color?.withValues(alpha: 0.6),
                 ),
               ),
             ],
@@ -131,20 +147,20 @@ class _Slide extends StatelessWidget {
 }
 
 class _Title extends StatelessWidget {
-  final String? title;
+  final String title;
   const _Title(this.title);
 
   @override
   Widget build(BuildContext context) {
-    final titleStyle = Theme.of(context).textTheme.titleLarge;
-    return Container(
-      padding: const EdgeInsets.only(top: 10),
-      margin: const EdgeInsets.symmetric(horizontal: 10),
-      child: Row(
-        children: [
-          if (title != null) Text(title!, style: titleStyle),
-          const Spacer(),
-        ],
+    final theme = Theme.of(context);
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Text(
+        title,
+        style: theme.textTheme.titleMedium?.copyWith(
+          fontWeight: FontWeight.bold,
+        ),
       ),
     );
   }
