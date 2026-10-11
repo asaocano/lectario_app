@@ -263,23 +263,26 @@ class _BookActions extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final bookshelf = ref.read(bookshelfProvider.notifier);
     final bookshelfState = ref.watch(bookshelfProvider);
+    final bookshelfNotifier = ref.read(bookshelfProvider.notifier);
+
     final isInWant = bookshelfState.wantToRead.any(
       (book) => book.id == preview.id,
     );
     final isFavorite = bookshelfState.favorites.any(
       (book) => book.id == preview.id,
     );
-    final isRead = bookshelfState.read.any((book) => book.id == preview.id);
+    final isRead = bookshelfState.read.any(
+      (book) => book.id == preview.id,
+    );
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 12.0),
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 12.0),
         decoration: BoxDecoration(
-          color: Colors.grey.withAlpha(20), // Fondo suave
-          borderRadius: BorderRadius.circular(16), // Bordes curvos tipo píldora
+          color: Colors.grey.withAlpha(20),
+          borderRadius: BorderRadius.circular(16),
         ),
         child: Row(
           children: [
@@ -290,20 +293,19 @@ class _BookActions extends ConsumerWidget {
                     : Icons.bookmark_add_outlined,
                 label: "Quiero leer",
                 color: Colors.orange,
-                onTap: () => bookshelf.toogleBook(
+                onTap: () => bookshelfNotifier.toogleBook(
                   preview,
                   BookshelfStatus.wantToRead.value,
                 ),
               ),
             ),
-            // Línea divisoria sutil entre botones
             Container(height: 35, width: 2, color: Colors.grey.withAlpha(20)),
             Expanded(
               child: _buildActionItem(
                 icon: isFavorite ? Icons.favorite : Icons.favorite_border,
                 label: "Favorito",
                 color: Colors.red,
-                onTap: () => bookshelf.toogleBook(
+                onTap: () => bookshelfNotifier.toogleBook(
                   preview,
                   BookshelfStatus.favorite.value,
                 ),
@@ -317,8 +319,10 @@ class _BookActions extends ConsumerWidget {
                     : Icons.bookmark_added_outlined,
                 label: "Leído",
                 color: Colors.green,
-                onTap: () =>
-                    bookshelf.toogleBook(preview, BookshelfStatus.read.value),
+                onTap: () => bookshelfNotifier.toogleBook(
+                  preview,
+                  BookshelfStatus.read.value,
+                ),
               ),
             ),
           ],

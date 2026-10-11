@@ -27,7 +27,7 @@ class HomeView extends ConsumerWidget {
             Text(
               "Cargando catálogo...",
               style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.textTheme.bodyMedium?.color?.withOpacity(0.7),
+                color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.7),
               ),
             ),
           ],

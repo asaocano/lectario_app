@@ -73,28 +73,38 @@ class StorageBooksNotifier extends StateNotifier<BookshelfState> {
 
   /// Método modificado por si mueven un libro de categoría
   Future<void> toogleBook(BookPreview preview, int status) async {
-    // 1. Impactamos el cambio en la persistencia local (Drift)
-    await localStorageRepository.toogleBook(preview, status);
-
-    // 2. Clonamos las listas actuales para manipularlas de forma inmutable
+    // 1. Clonamos las listas actuales para manipularlas de forma inmutable
     List<BookPreview> want = [...state.wantToRead];
     List<BookPreview> favs = [...state.favorites];
     List<BookPreview> readBooks = [...state.read];
 
+    // 2. Verificamos si el libro ya se encontraba exactamente en la categoría seleccionada
+    bool isAlreadyInTargetCategory = false;
+    if (status == 1) {
+      isAlreadyInTargetCategory = want.any((b) => b.id == preview.id);
+    } else if (status == 2) {
+      isAlreadyInTargetCategory = favs.any((b) => b.id == preview.id);
+    } else if (status == 3) {
+      isAlreadyInTargetCategory = readBooks.any((b) => b.id == preview.id);
+    }
+
     // 3. Lo eliminamos preventivamente de todas las listas
-    // (por si estaba mudándose de una categoría a otra o si se desmarcó)
     want.removeWhere((b) => b.id == preview.id);
     favs.removeWhere((b) => b.id == preview.id);
     readBooks.removeWhere((b) => b.id == preview.id);
 
-    // 4. Lo insertamos directamente en la lista destino según el estado seleccionado.
-    // (Nota: Si tu toogleBook también sirve para "quitar" el libro por completo de la librería,
-    // aquí podrías validar el resultado antes de insertar).
-    if (status == 1) want.insert(0, preview);
-    if (status == 2) favs.insert(0, preview);
-    if (status == 3) readBooks.insert(0, preview);
+    // 4. Si NO estaba ya en esa categoría, lo agregamos.
+    // (Si YA estaba, significa que el usuario hizo clic para desmarcarlo/quitarlo, por lo que se queda eliminado).
+    if (!isAlreadyInTargetCategory) {
+      if (status == 1) want.insert(0, preview);
+      if (status == 2) favs.insert(0, preview);
+      if (status == 3) readBooks.insert(0, preview);
+    }
 
-    // 5. Actualizamos el estado de manera atómica
+    // 5. Impactamos el cambio en la persistencia local (Drift)
+    await localStorageRepository.toogleBook(preview, status);
+
+    // 6. Actualizamos el estado de manera atómica
     state = state.copyWith(wantToRead: want, favorites: favs, read: readBooks);
   }
 }

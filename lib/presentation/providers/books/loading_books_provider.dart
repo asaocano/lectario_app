@@ -11,5 +11,5 @@ import 'package:lectario_app/presentation/providers/books/preview_books_provider
 /// la información inicial del catálogo.
 final loadingBooksProvider = Provider<bool>((ref) {
   final booksCatalog = ref.watch(previewBooksProvider);
-  return booksCatalog.sections.every((section) => !section.isLoading);
+  return booksCatalog.sections.every((section) => section.books.isNotEmpty);
 });

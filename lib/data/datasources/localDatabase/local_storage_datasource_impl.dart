@@ -21,11 +21,21 @@ class LocalStorageDatasourceImpl implements LocalStorageDatasource {
 
   @override
   Future<void> toogleBook(BookPreview preview, int status) async {
-    final isInShelf = await isBookOnShelf(preview.authorId);
+    final isInShelf = await isBookOnShelf(preview.id);
 
     if (isInShelf) {
+      final currentStatus = await getBookStatus(preview.id);
+
+      if (currentStatus == status) {
+        database.delete(database.bookshelf)
+          ..where((table) => table.id.equals(preview.id))
+          ..go();
+
+        return;
+      }
+
       database.update(database.bookshelf)
-        ..where((table) => table.id.equals(preview.authorId))
+        ..where((table) => table.id.equals(preview.id))
         ..write(BookshelfCompanion(status: Value(status)));
 
       return;
@@ -35,7 +45,7 @@ class LocalStorageDatasourceImpl implements LocalStorageDatasource {
         .into(database.bookshelf)
         .insert(
           BookshelfCompanion.insert(
-            id: preview.authorId,
+            id: preview.id,
             title: preview.title,
             author: preview.author,
             authorId: preview.authorId,
@@ -72,5 +82,14 @@ class LocalStorageDatasourceImpl implements LocalStorageDatasource {
     );
 
     return books.toList();
+  }
+
+  Future<int> getBookStatus(String bookId) async {
+    final query = database.select(database.bookshelf)
+      ..where((table) => table.id.equals(bookId));
+
+    final book = await query.getSingle();
+
+    return book.status;
   }
 }
